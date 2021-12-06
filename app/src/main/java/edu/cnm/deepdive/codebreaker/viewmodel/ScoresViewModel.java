@@ -3,25 +3,34 @@ package edu.cnm.deepdive.codebreaker.viewmodel;
 import android.app.Application;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
+import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
+import androidx.lifecycle.DefaultLifecycleObserver;
+import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Transformations;
 import androidx.preference.PreferenceManager;
 import edu.cnm.deepdive.codebreaker.R;
+import edu.cnm.deepdive.codebreaker.model.dto.RankedUser;
 import edu.cnm.deepdive.codebreaker.model.view.GameSummary;
 import edu.cnm.deepdive.codebreaker.service.GameRepository;
+import edu.cnm.deepdive.codebreaker.service.GameRepository.RankingOrder;
+import io.reactivex.disposables.CompositeDisposable;
 import java.util.List;
 
-public class ScoresViewModel extends AndroidViewModel {
+public class ScoresViewModel extends AndroidViewModel implements DefaultLifecycleObserver {
 
   private final GameRepository repository;
   private final MutableLiveData<Integer> codeLength;
   private final MutableLiveData<Integer> poolSize;
   private final MutableLiveData<Boolean> sortedByTime;
   private final LiveData<List<GameSummary>> scoreboard;
+  private final MutableLiveData<List<RankedUser>> rankings;
+  private final MutableLiveData<Throwable> throwable;
+  private final CompositeDisposable pending;
 
   public ScoresViewModel(@NonNull Application application) {
     super(application);
@@ -44,6 +53,9 @@ public class ScoresViewModel extends AndroidViewModel {
     scoreboard = Transformations.switchMap(trigger, (params) -> params.sortedByTime
         ? repository.getOrderedByTotalTime(params.poolSize, params.codeLength)
         : repository.getOrderedByGuessCount(params.poolSize, params.codeLength));
+    rankings = new MutableLiveData<>();
+    throwable = new MutableLiveData<>();
+    pending = new CompositeDisposable();
   }
 
   public LiveData<List<GameSummary>> getGames() {
@@ -78,6 +90,33 @@ public class ScoresViewModel extends AndroidViewModel {
     return scoreboard;
   }
 
+  public LiveData<List<RankedUser>> getRankings() {
+    return rankings;
+  }
+
+  @Override
+  public void onStop(@NonNull LifecycleOwner owner) {
+    DefaultLifecycleObserver.super.onStop(owner);
+    pending.clear();
+  }
+
+  private void refreshRankings() {
+    pending.add(
+        repository
+            .getRankings(codeLength.getValue(), poolSize.getValue(),
+                sortedByTime.getValue() ? RankingOrder.TIME : RankingOrder.COUNT)
+            .subscribe(
+                rankings::postValue,
+                this::postThrowable
+
+            )
+    );
+
+  }
+  private void postThrowable(Throwable throwable) {
+    Log.e(getClass().getSimpleName(), throwable.getMessage(), throwable);
+    this.throwable.postValue(throwable);
+  }
   private static class ScoreboardParams {
 
     private final int codeLength;
