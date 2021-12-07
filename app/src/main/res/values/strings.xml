@@ -11,7 +11,7 @@
 
   <string name="menu_play">Play</string>
   <string name="menu_scores">My scores</string>
-  <string name="menu_rankings">Player ranking</string>
+  <string name="menu_ranks">Player ranks</string>
   <string name="menu_settings">Settings</string>
 
 
@@ -34,6 +34,7 @@
   <string name="pool_size_label">Pool size</string>
 
   <string name="created_header">Completed</string>
+  <string name="display_name_header">Name</string>
 
   <string name="guesses_header_unselected">Guesses</string>
   <string name="time_header_unselected">Time</string>
