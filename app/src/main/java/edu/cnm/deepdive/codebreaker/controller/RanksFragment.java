@@ -12,18 +12,20 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import edu.cnm.deepdive.codebreaker.R;
 import edu.cnm.deepdive.codebreaker.adapter.GameSummaryAdapter;
+import edu.cnm.deepdive.codebreaker.adapter.RankedUserAdapter;
+import edu.cnm.deepdive.codebreaker.databinding.FragmentRanksBinding;
 import edu.cnm.deepdive.codebreaker.databinding.FragmentScoresBinding;
+import edu.cnm.deepdive.codebreaker.model.dto.RankedUser;
 import edu.cnm.deepdive.codebreaker.viewmodel.ScoresViewModel;
-import java.util.function.BiConsumer;
 
-public class ScoresFragment extends Fragment {
+public class RanksFragment extends Fragment {
 
   private ScoresViewModel viewModel;
-  private FragmentScoresBinding binding;
+  private FragmentRanksBinding binding;
 
   public View onCreateView(@NonNull LayoutInflater inflater,
       ViewGroup container, Bundle savedInstanceState) {
-    binding = FragmentScoresBinding.inflate(inflater, container, false);
+    binding = FragmentRanksBinding.inflate(inflater, container, false);
     Resources resources = getResources();
     binding.codeLengthDisplay.setText(String.valueOf(resources.getInteger(R.integer.code_length_pref_default)));
     binding.poolSizeDisplay.setText(String.valueOf(resources.getInteger(R.integer.pool_size_pref_default)));
@@ -40,10 +42,10 @@ public class ScoresFragment extends Fragment {
     super.onViewCreated(view, savedInstanceState);
     viewModel = new ViewModelProvider(this).get(ScoresViewModel.class);
     viewModel
-        .getScoreboard()
-        .observe(getViewLifecycleOwner(), (games) -> {
-          GameSummaryAdapter adapter = new GameSummaryAdapter(getContext(), games);
-          binding.games.setAdapter(adapter);
+        .getRankings()
+        .observe(getViewLifecycleOwner(), (ranks) -> {
+          RankedUserAdapter adapter = new RankedUserAdapter(getContext(), ranks);
+          binding.ranks.setAdapter(adapter);
         });
     viewModel
         .getCodeLength()
